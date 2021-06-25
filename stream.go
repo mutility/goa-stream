@@ -13,6 +13,15 @@ import (
 )
 
 var (
+	stdin  io.Reader = os.Stdin
+	stdout io.Writer = os.Stdout
+	stderr interface {
+		io.Writer
+		io.StringWriter
+	} = os.Stderr
+)
+
+var (
 	inF, outF         *string
 	strictF, verboseF *bool
 )
@@ -49,7 +58,7 @@ func JSONL(data interface{}, verbose bool) error {
 	enc.SetIndent("", "  ")
 	err := reflectJSONL(dec, enc, data, verbose || (verboseF != nil && *verboseF))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintln(stderr, err.Error())
 	}
 	return nil
 }
@@ -58,28 +67,28 @@ func nopClose() error { return nil }
 
 func input() (r io.Reader, close func() error) {
 	if inF == nil || *inF == "-" {
-		return os.Stdin, nopClose
+		return stdin, nopClose
 	}
 	if *inF != "" {
 		i, err := os.Open(*inF)
 		if err == nil {
 			return i, i.Close
 		}
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintln(stderr, err.Error())
 	}
 	return strings.NewReader(""), nopClose
 }
 
 func output() (w io.Writer, close func() error) {
 	if outF == nil || *outF == "-" {
-		return os.Stdout, nopClose
+		return stdout, nopClose
 	}
 	if *outF != "" {
 		o, err := os.Create(*outF)
 		if err == nil {
 			return o, o.Close
 		}
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintln(stderr, err.Error())
 	}
 	return io.Discard, nopClose
 }
@@ -87,7 +96,11 @@ func output() (w io.Writer, close func() error) {
 func reflectJSONL(dec *json.Decoder, enc *json.Encoder, data interface{}, verbose bool) error {
 	p := func(string) (int, error) { return 0, nil }
 	if verbose {
-		p = os.Stderr.WriteString
+		p = stderr.WriteString
+	}
+
+	if data == nil {
+		return nil
 	}
 	stm := reflect.ValueOf(data)
 	sendandclose := false
@@ -157,6 +170,8 @@ func reflectJSONL(dec *json.Decoder, enc *json.Encoder, data interface{}, verbos
 			}
 		})
 	}
-	defer p("\n")
+	if send.IsValid() || recv.IsValid() {
+		defer p("\n")
+	}
 	return eg.Wait()
 }

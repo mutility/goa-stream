@@ -1,5 +1,7 @@
 # goa-stream
 
+[![CI](https://github.com/mutility/goa-stream/actions/workflows/build.yaml/badge.svg)](https://github.com/mutility/goa-stream/actions/workflows/build.yaml)
+
 goa-stream is a helper package for implementing streaming support in `goa example` clients. To use it, perform the following steps.
 
 1. Create your design, implement your service
