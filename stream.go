@@ -133,7 +133,7 @@ func reflectJSONL(dec *json.Decoder, enc *json.Encoder, data interface{}, verbos
 						break
 					}
 					p("!") // send error
-					return fmt.Errorf("send: %w", out[0].Interface())
+					return fmt.Errorf("send: %w", err)
 				}
 			}
 			if !sendandclose {
